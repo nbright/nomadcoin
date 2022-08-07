@@ -2,7 +2,7 @@ package utils
 
 import "log"
 
-func HandleFunc(err error) {
+func HandleErr(err error) {
 	if err != nil {
 		log.Panic(err)
 	}
