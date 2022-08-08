@@ -3,10 +3,14 @@ package rest
 import (
 	"encoding/json"
 	"fmt"
-	"github/nbright/nomadcoin/blockchain"
-	"github/nbright/nomadcoin/utils"
+	"strconv"
+
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/nbright/nomadcoin/blockchain"
+	"github.com/nbright/nomadcoin/utils"
 )
 
 var port string
@@ -31,6 +35,9 @@ type urlDescription struct {
 type addBlockBody struct {
 	Message string
 }
+type errorResponse struct {
+	ErrorMessage string `json:"errorMessage"`
+}
 
 func documentation(rw http.ResponseWriter, r *http.Request) {
 	data := []urlDescription{
@@ -41,12 +48,17 @@ func documentation(rw http.ResponseWriter, r *http.Request) {
 		},
 		{
 			URL:         url("/blocks"),
+			Method:      "GET",
+			Description: "See All Blocks",
+		},
+		{
+			URL:         url("/blocks"),
 			Method:      "POST",
 			Description: "Add A Block",
 			Payload:     "data:string",
 		},
 		{
-			URL:         url("/blocks/{id}"),
+			URL:         url("/blocks/{height}"),
 			Method:      "GET",
 			Description: "See A Block",
 		},
@@ -71,11 +83,25 @@ func blocks(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusCreated)
 	}
 }
+func block(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["height"])
+	utils.HandleErr(err)
+	block, err := blockchain.GetBlockChain().GetBlock(id)
+	encoder := json.NewEncoder(rw)
+	if err == blockchain.ErrNotFound {
+		encoder.Encode(errorResponse{fmt.Sprint(err)})
+	} else {
+		encoder.Encode(block)
+	}
+}
+
 func Start(aPort int) {
-	handler := http.NewServeMux()
+	router := mux.NewRouter()
 	port = fmt.Sprintf(":%d", aPort)
-	handler.HandleFunc("/", documentation)
-	handler.HandleFunc("/blocks", blocks)
+	router.HandleFunc("/", documentation).Methods("GET")
+	router.HandleFunc("/blocks", blocks).Methods("GET", "POST")
+	router.HandleFunc("/blocks/{height:[0-9]+}", block).Methods("GET")
 	fmt.Printf("Listening on http://localhost%s\n", port)
-	log.Fatal(http.ListenAndServe(port, handler))
+	log.Fatal(http.ListenAndServe(port, router))
 }

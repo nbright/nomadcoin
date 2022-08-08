@@ -1,11 +1,10 @@
 package main
 
 import (
-	"github/nbright/nomadcoin/explorer"
-	"github/nbright/nomadcoin/rest"
+	"github.com/nbright/nomadcoin/rest"
 )
 
 func main() {
-	go explorer.Start(3000)
+	//go explorer.Start(3000)
 	rest.Start(4000)
 }
