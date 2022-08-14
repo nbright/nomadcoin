@@ -1,8 +1,6 @@
 package db
 
 import (
-	"fmt"
-
 	"github.com/boltdb/bolt"
 	"github.com/nbright/nomadcoin/utils"
 )
@@ -21,12 +19,14 @@ func DB() *bolt.DB {
 		db = dbPointer
 		utils.HandleErr(err)
 
-		err := db.Update(func(tx *bolt.Tx) error {
-
+		err = db.Update(func(t *bolt.Tx) error {
+			_, err := t.CreateBucketIfNotExists([]byte(dataBucket))
+			utils.HandleErr(err)
+			_, err = t.CreateBucketIfNotExists([]byte(blocksBucket))
+			return err
 		})
-		defer db.Close()
+		utils.HandleErr(err)
 	}
-	fmt.Println(db)
 	return db
 
 }
