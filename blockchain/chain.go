@@ -2,6 +2,8 @@ package blockchain
 
 import (
 	"sync"
+
+	"github.com/nbright/nomadcoin/db"
 )
 
 // func (b *BlockChain) listBlocks() {
@@ -19,6 +21,10 @@ type blockChain struct {
 
 var b *blockChain
 var once sync.Once
+
+func (b *blockChain) persist(){
+	db.SaveBlockchain(b.)
+}
 
 func (b *blockChain) AddBlock(data string) {
 	block := createBlock(data, b.NewestHash, b.Height)
