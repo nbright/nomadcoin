@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/nbright/nomadcoin/db"
+	"github.com/nbright/nomadcoin/blockchain"
 )
 
 func main() {
@@ -10,6 +10,9 @@ func main() {
 
 	//fmt.Println(os.Args[2:])
 
-	db.DB()
+	//db.DB()
 	//cli.Start()
+
+	blockchain.BlockChain()
+
 }

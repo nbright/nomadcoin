@@ -25,7 +25,7 @@ func (b *Block) toBytes() []byte {
 }
 
 func (b *Block) persist() {
-	db.SaveBlock(b.Hash)
+	db.SaveBlock(b.Hash, b.toBytes())
 }
 
 func createBlock(data string, preHash string, height int) *Block {
