@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/nbright/nomadcoin/db"
+	"github.com/nbright/nomadcoin/utils"
 )
 
 // func (b *BlockChain) listBlocks() {
@@ -22,14 +23,15 @@ type blockChain struct {
 var b *blockChain
 var once sync.Once
 
-func (b *blockChain) persist(){
-	db.SaveBlockchain(b.)
+func (b *blockChain) persist() {
+	db.SaveBlockchain(utils.ToBytes(b))
 }
 
 func (b *blockChain) AddBlock(data string) {
-	block := createBlock(data, b.NewestHash, b.Height)
+	block := createBlock(data, b.NewestHash, b.Height+1)
 	b.NewestHash = block.Hash
 	b.Height = block.Height
+	b.persist()
 }
 
 func BlockChain() *blockChain {
