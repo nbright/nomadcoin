@@ -1,6 +1,8 @@
 package blockchain
 
 import (
+	"bytes"
+	"encoding/gob"
 	"sync"
 
 	"github.com/nbright/nomadcoin/db"
@@ -23,6 +25,11 @@ type blockChain struct {
 var b *blockChain
 var once sync.Once
 
+func (b *blockChain) FromBytes(data []byte) {
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+	decoder.Decode(b)
+}
+
 func (b *blockChain) persist() {
 	db.SaveBlockchain(utils.ToBytes(b))
 }
@@ -38,7 +45,15 @@ func BlockChain() *blockChain {
 	if b == nil {
 		once.Do(func() {
 			b = &blockChain{"", 0}
-			b.AddBlock("Genesis")
+			// search for "checkpoint" on the db
+			checkpoint := db.Checkpoint()
+			if checkpoint == nil {
+				b.AddBlock("Genesis")
+			} else {
+				// restore b from bytes
+				b.FromBytes(checkpoint)
+			}
+
 		})
 	}
 	return b
