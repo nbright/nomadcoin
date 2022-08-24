@@ -3,7 +3,6 @@ package rest
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"log"
 	"net/http"
@@ -29,9 +28,9 @@ type urlDescription struct {
 	Payload     string `json:"payload,omitempty"`
 }
 
-// func (u URLDescription) String() string {
-// 	return "Hello I'm URLDescription Print"
-// }
+//	func (u URLDescription) String() string {
+//		return "Hello I'm URLDescription Print"
+//	}
 type addBlockBody struct {
 	Message string
 }
@@ -85,9 +84,8 @@ func blocks(rw http.ResponseWriter, r *http.Request) {
 }
 func block(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["height"])
-	utils.HandleErr(err)
-	block, err := blockchain.GetBlockChain().GetBlock(id)
+	hash, err := vars["hash"]
+	block, err := blockchain.FindBlock(hash)
 	encoder := json.NewEncoder(rw)
 	if err == blockchain.ErrNotFound {
 		encoder.Encode(errorResponse{fmt.Sprint(err)})
@@ -109,7 +107,8 @@ func Start(aPort int) {
 	router.Use(jsonContentTypeMiddleware)
 	router.HandleFunc("/", documentation).Methods("GET")
 	router.HandleFunc("/blocks", blocks).Methods("GET", "POST")
-	router.HandleFunc("/blocks/{height:[0-9]+}", block).Methods("GET")
+	//[a-f0-9]+ : 헥사데시멀 Reqular Expression
+	router.HandleFunc("/blocks/{hash:[a-f0-9]+}", block).Methods("GET")
 	fmt.Printf("Listening on http://localhost%s\n", port)
 	log.Fatal(http.ListenAndServe(port, router))
 }

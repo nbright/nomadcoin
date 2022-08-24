@@ -54,7 +54,7 @@ func Checkpoint() []byte {
 	var data []byte
 	DB().View(func(t *bolt.Tx) error {
 		bucket := t.Bucket([]byte(dataBucket))
-		data := bucket.Get([]byte(checkpoint))
+		data = bucket.Get([]byte(checkpoint))
 		return nil
 	})
 	return data
