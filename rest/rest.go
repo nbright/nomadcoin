@@ -9,7 +9,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/nbright/nomadcoin/blockchain"
-	"github.com/nbright/nomadcoin/utils"
 )
 
 var port string
@@ -57,7 +56,7 @@ func documentation(rw http.ResponseWriter, r *http.Request) {
 			Payload:     "data:string",
 		},
 		{
-			URL:         url("/blocks/{height}"),
+			URL:         url("/blocks/{hash}"),
 			Method:      "GET",
 			Description: "See A Block",
 		},
@@ -73,18 +72,20 @@ func documentation(rw http.ResponseWriter, r *http.Request) {
 func blocks(rw http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		rw.Header().Add("Content-Type", "application/json")
-		json.NewEncoder(rw).Encode(blockchain.GetBlockChain().AllBlocks())
+		return
+		// rw.Header().Add("Content-Type", "application/json")
+		// json.NewEncoder(rw).Encode(blockchain.GetBlockChain().AllBlocks())
 	case "POST":
-		var addBlockBody addBlockBody
-		utils.HandleErr(json.NewDecoder(r.Body).Decode(&addBlockBody))
-		blockchain.GetBlockChain().AddBlock(addBlockBody.Message)
-		rw.WriteHeader(http.StatusCreated)
+		return
+		// var addBlockBody addBlockBody
+		// utils.HandleErr(json.NewDecoder(r.Body).Decode(&addBlockBody))
+		// blockchain.GetBlockChain().AddBlock(addBlockBody.Message)
+		// rw.WriteHeader(http.StatusCreated)
 	}
 }
 func block(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	hash, err := vars["hash"]
+	hash := vars["hash"]
 	block, err := blockchain.FindBlock(hash)
 	encoder := json.NewEncoder(rw)
 	if err == blockchain.ErrNotFound {

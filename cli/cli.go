@@ -3,9 +3,11 @@ package cli
 import (
 	"flag"
 	"fmt"
-	"github/nbright/nomadcoin/explorer"
-	"github/nbright/nomadcoin/rest"
 	"os"
+	"runtime"
+
+	"github.com/nbright/nomadcoin/explorer"
+	"github.com/nbright/nomadcoin/rest"
 )
 
 func usage() {
@@ -13,8 +15,7 @@ func usage() {
 	fmt.Printf("Please use following commands: \n\n")
 	fmt.Printf("-port:     	Start the REST API (recommanded) \n")
 	fmt.Printf("-mode: 		Choose between 'html' and 'rest' \n")
-
-	os.Exit(0)
+	runtime.Goexit()
 }
 func Start() {
 	if len(os.Args) == 1 {
