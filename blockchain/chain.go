@@ -38,7 +38,21 @@ func (b *blockChain) AddBlock(data string) {
 	b.Height = block.Height
 	b.persist()
 }
+func (b *blockChain) Blocks() []*Block {
+	var blocks []*Block
+	hashCursor := b.NewestHash
+	for {
+		block, _ := FindBlock(hashCursor)
+		blocks = append(blocks, block)
 
+		if block.PrevHash != "" {
+			hashCursor = block.PrevHash
+		} else {
+			break
+		}
+	}
+	return blocks
+}
 func BlockChain() *blockChain {
 	if b == nil {
 		once.Do(func() {

@@ -32,7 +32,7 @@ func DB() *bolt.DB {
 }
 
 func Close() {
-	db.Close()
+	DB().Close()
 }
 
 func SaveBlock(hash string, data []byte) {
