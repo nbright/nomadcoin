@@ -16,9 +16,17 @@ import (
 // 	}
 // }
 
+const (
+	defaultDifficulty  int = 2
+	difficultyInterval int = 5
+	blockInterval      int = 2
+	allowedRange       int = 2
+)
+
 type blockChain struct {
-	NewestHash string `json:"newestHash"`
-	Height     int    `json:"height"`
+	NewestHash        string `json:"newestHash"`
+	Height            int    `json:"height"`
+	CurrentDifficulty int    `json:"currentDifficulty"`
 }
 
 var b *blockChain
@@ -36,6 +44,7 @@ func (b *blockChain) AddBlock(data string) {
 	block := createBlock(data, b.NewestHash, b.Height+1)
 	b.NewestHash = block.Hash
 	b.Height = block.Height
+	b.CurrentDifficulty = block.Difficulty
 	b.persist()
 }
 func (b *blockChain) Blocks() []*Block {
@@ -53,10 +62,37 @@ func (b *blockChain) Blocks() []*Block {
 	}
 	return blocks
 }
+
+func (b *blockChain) recalculateDifficulty() int {
+	allBlock := b.Blocks()
+	newestBlock := allBlock[0]
+	lastRecalculatedBlock := allBlock[difficultyInterval-1]
+	actualTime := (newestBlock.Timestamp / 60) - (lastRecalculatedBlock.Timestamp / 60)
+	expectedTime := difficultyInterval * blockInterval
+	if actualTime < (expectedTime - allowedRange) {
+		return b.CurrentDifficulty + 1
+	} else if actualTime > (expectedTime + allowedRange) {
+		return b.CurrentDifficulty - 1
+	}
+	return b.CurrentDifficulty
+}
+
+func (b *blockChain) difficulty() int {
+	if b.Height == 0 {
+		return defaultDifficulty
+	} else if b.Height%difficultyInterval == 0 {
+		// recalculate the difficulty
+		return b.recalculateDifficulty()
+	} else {
+		return b.CurrentDifficulty
+	}
+	return 2
+}
+
 func BlockChain() *blockChain {
 	if b == nil {
 		once.Do(func() {
-			b = &blockChain{"", 0}
+			b = &blockChain{}
 			// search for "checkpoint" on the db
 			checkpoint := db.Checkpoint()
 			if checkpoint == nil {

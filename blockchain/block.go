@@ -2,14 +2,13 @@ package blockchain
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/nbright/nomadcoin/db"
 	"github.com/nbright/nomadcoin/utils"
 )
-
-const difficulty int = 2
 
 type Block struct {
 	Data       string `json:"data"`
@@ -46,6 +45,7 @@ func (b *Block) mine() {
 	for {
 		b.Timestamp = int(time.Now().Unix())
 		hash := utils.Hash(b)
+		fmt.Printf("\n\n\nHash:%s\nTarget:%s\nNonce:%d\n\n\n", hash, target, b.Nonce)
 		if strings.HasPrefix(hash, target) {
 			b.Hash = hash
 			break
@@ -61,7 +61,7 @@ func createBlock(data string, preHash string, height int) *Block {
 		Hash:       "",
 		PrevHash:   preHash,
 		Height:     height,
-		Difficulty: difficulty,
+		Difficulty: BlockChain().difficulty(),
 		Nonce:      0,
 	}
 	block.mine()
