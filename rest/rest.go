@@ -9,7 +9,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/nbright/nomadcoin/blockchain"
-	"github.com/nbright/nomadcoin/utils"
 )
 
 var port string
@@ -31,9 +30,10 @@ type urlDescription struct {
 //	func (u URLDescription) String() string {
 //		return "Hello I'm URLDescription Print"
 //	}
-type addBlockBody struct {
-	Message string
-}
+//
+//	type addBlockBody struct {
+//		Message string
+//	}
 type errorResponse struct {
 	ErrorMessage string `json:"errorMessage"`
 }
@@ -81,9 +81,9 @@ func blocks(rw http.ResponseWriter, r *http.Request) {
 		//rw.Header().Add("Content-Type", "application/json")
 		json.NewEncoder(rw).Encode(blockchain.BlockChain().Blocks())
 	case "POST":
-		var addBlockBody addBlockBody
-		utils.HandleErr(json.NewDecoder(r.Body).Decode(&addBlockBody))
-		blockchain.BlockChain().AddBlock(addBlockBody.Message)
+		// var addBlockBody addBlockBody
+		// utils.HandleErr(json.NewDecoder(r.Body).Decode(&addBlockBody))
+		blockchain.BlockChain().AddBlock()
 		rw.WriteHeader(http.StatusCreated)
 	}
 }

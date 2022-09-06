@@ -40,8 +40,8 @@ func (b *blockChain) persist() {
 	db.SaveBlockchain(utils.ToBytes(b))
 }
 
-func (b *blockChain) AddBlock(data string) {
-	block := createBlock(data, b.NewestHash, b.Height+1)
+func (b *blockChain) AddBlock() {
+	block := createBlock(b.NewestHash, b.Height+1)
 	b.NewestHash = block.Hash
 	b.Height = block.Height
 	b.CurrentDifficulty = block.Difficulty
@@ -86,7 +86,18 @@ func (b *blockChain) difficulty() int {
 	} else {
 		return b.CurrentDifficulty
 	}
-	return 2
+}
+
+func (b *blockChain) txOuts() []*TxOut {
+	var txOuts []*TxOut
+	blocks := b.Blocks()
+	for _, block := range blocks {
+		for _, tx := range block.Transactions {
+			txOuts = append(txOuts, tx.TxOuts...)
+		}
+	}
+
+	return txOuts
 }
 
 func BlockChain() *blockChain {
@@ -96,7 +107,7 @@ func BlockChain() *blockChain {
 			// search for "checkpoint" on the db
 			checkpoint := db.Checkpoint()
 			if checkpoint == nil {
-				b.AddBlock("Genesis")
+				b.AddBlock()
 			} else {
 				fmt.Printf("Restoring...")
 				// restore b from bytes
