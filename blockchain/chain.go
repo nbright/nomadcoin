@@ -96,8 +96,27 @@ func (b *blockChain) txOuts() []*TxOut {
 			txOuts = append(txOuts, tx.TxOuts...)
 		}
 	}
-
 	return txOuts
+}
+
+func (b *blockChain) TxOutsByAddress(address string) []*TxOut {
+	var ownedTxOuts []*TxOut
+	txOuts := b.txOuts()
+	for _, txOut := range txOuts {
+		if txOut.Owner == address {
+			ownedTxOuts = append(ownedTxOuts, txOut)
+		}
+	}
+	return ownedTxOuts
+}
+
+func (b *blockChain) BalanceByAddress(address string) int {
+	txOuts := b.txOuts()
+	var amount int
+	for _, txOut := range txOuts {
+		amount += txOut.Amount
+	}
+	return amount
 }
 
 func BlockChain() *blockChain {
