@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"errors"
 	"time"
 
 	"github.com/nbright/nomadcoin/utils"
@@ -9,6 +10,12 @@ import (
 const (
 	minerReward int = 50
 )
+
+type mempool struct {
+	Txs []*Tx
+}
+
+var Mempool *mempool = &mempool{}
 
 type Tx struct {
 	Id        string   `json:"id"`
@@ -47,3 +54,51 @@ func makeConinbaseTx(address string) *Tx {
 	return &tx
 
 }
+
+func makeTx(from, to string, amount int) (*Tx, error) {
+
+	if amount > BlockChain().BalanceByAddress(from) {
+		return nil, errors.New("not enough money")
+	}
+
+	var txIns []*TxIn
+	var txOuts []*TxOut
+	total := 0
+	oldTxOuts := BlockChain().TxOutsByAddress(from)
+	for _, txOut := range oldTxOuts {
+		if total > amount {
+			break
+		}
+		txIn := &TxIn{txOut.Owner, txOut.Amount}
+		txIns = append(txIns, txIn)
+		total += txOut.Amount
+
+	}
+	change := total - amount
+	if change != 0 {
+		changeTxOut := &TxOut{from, change}
+		txOuts = append(txOuts, changeTxOut)
+	}
+	txOut := &TxOut{to, amount}
+	txOuts = append(txOuts, txOut)
+
+	tx := &Tx{
+		Id:        "",
+		Timestamp: int(time.Now().Unix()),
+		Txins:     txIns,
+		TxOuts:    txOuts,
+	}
+	tx.getId()
+	return tx, nil
+}
+
+func (m *mempool) AddTx(to string, amount int) error {
+	tx, err := makeTx("nico", to, amount)
+	if err != nil {
+		return err
+	}
+	m.Txs = append(m.Txs, tx)
+	return nil
+}
+
+// 승인할 트랜잭션들 가져오기

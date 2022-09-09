@@ -21,6 +21,11 @@ func (u url) MarshalText() ([]byte, error) {
 	return []byte(url), nil
 }
 
+type addPayload struct {
+	To     string `json:"to"`
+	Amount int    `json:"amount"`
+}
+
 type urlDescription struct {
 	URL         url    `json:"url"`
 	Method      string `json:"method"`
@@ -118,7 +123,7 @@ func jsonContentTypeMiddleware(next http.Handler) http.Handler {
 }
 
 func status(rw http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(rw).Encode(blockchain.BlockChain())
+	json.NewEncoder(rw).Encode(blockchain.Mempool.Txs)
 }
 
 func balance(rw http.ResponseWriter, r *http.Request) {
@@ -135,6 +140,20 @@ func balance(rw http.ResponseWriter, r *http.Request) {
 
 }
 
+func mempool(rw http.ResponseWriter, r *http.Request) {
+	utils.HandleErr(json.NewEncoder(rw).Encode(blockchain.Mempool))
+}
+func transactions(rw http.ResponseWriter, r *http.Request) {
+	var payload addPayload
+	utils.HandleErr(json.NewDecoder(r.Body).Decode(&payload))
+	err := blockchain.Mempool.AddTx(payload.To, payload.Amount)
+	if err != nil {
+		json.NewEncoder(rw).Encode(errorResponse{"not enough funds"})
+	}
+	rw.WriteHeader(http.StatusCreated)
+
+}
+
 func Start(aPort int) {
 	router := mux.NewRouter()
 	port = fmt.Sprintf(":%d", aPort)
@@ -145,7 +164,9 @@ func Start(aPort int) {
 
 	//[a-f0-9]+ : 헥사데시멀 Reqular Expression
 	router.HandleFunc("/blocks/{hash:[a-f0-9]+}", block).Methods("GET")
-	router.HandleFunc("/balance/{address}", balance).Methods("GET")
+	router.HandleFunc("/balance/{address}", balance)
+	router.HandleFunc("/mempool", mempool)
+	router.HandleFunc("/transactions", transactions).Methods("POST")
 	fmt.Printf("Listening on http://localhost%s\n", port)
 	log.Fatal(http.ListenAndServe(port, router))
 }
