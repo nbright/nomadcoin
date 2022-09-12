@@ -29,17 +29,35 @@ func (t *Tx) getId() {
 }
 
 type TxIn struct {
-	Owner  string
-	Amount int
+	TxID  string
+	Index int
+	Owner string `json:"owner"`
 }
 type TxOut struct {
 	Owner  string
 	Amount int
 }
 
+//unspentTxOut
+type UTxOut struct {
+	TxID   string
+	Index  int
+	Amount int
+}
+
+func isOnMempool(uTxOut *UTxOut) bool {
+	exists := false
+	for _, tx := range Mempool.Txs {
+		for _, input := range tx.Txins {
+			exists = input.TxID == uTxOut.TxID && input.Index == uTxOut.Index
+		}
+	}
+	return exists
+}
+
 func makeConinbaseTx(address string) *Tx {
 	txIns := []*TxIn{
-		{"COINBASE", minerReward},
+		{"", -1, "COINBASE"},
 	}
 	txOuts := []*TxOut{
 		{address, minerReward},
@@ -56,7 +74,7 @@ func makeConinbaseTx(address string) *Tx {
 }
 
 func makeTx(from, to string, amount int) (*Tx, error) {
-
+	/* 순진한 코드
 	if amount > BlockChain().BalanceByAddress(from) {
 		return nil, errors.New("not enough money")
 	}
@@ -90,6 +108,39 @@ func makeTx(from, to string, amount int) (*Tx, error) {
 	}
 	tx.getId()
 	return tx, nil
+	*/
+
+	//보낼려고 하는 돈(Amount)가 from지갑주소의 돈보다 크면 못 보냄 (에러)
+
+	if amount > BlockChain().BalanceByAddress(from) {
+		return nil, errors.New("not enough 돈")
+	}
+	var txOuts []*TxOut
+	var txIns []*TxIn
+	total := 0
+	uTxOuts := BlockChain().UTxOutsByAddress(from) // from지갑주소에서 UnSpent Output 써버리지 않은 아웃풋
+	for _, uTxOut := range uTxOuts {
+		if total > amount {
+			break
+		}
+		txIn := &TxIn{uTxOut.TxID, uTxOut.Index, from}
+		txIns = append(txIns, txIn)
+		total += uTxOut.Amount
+	}
+	if change := total - amount; change != 0 {
+		txOut := &TxOut{from, change}
+		txOuts = append(txOuts, txOut)
+	}
+	txOut := &TxOut{to, amount}
+	txOuts = append(txOuts, txOut)
+	tx := &Tx{
+		Id:        "",
+		Timestamp: int(time.Now().Unix()),
+		Txins:     txIns,
+		TxOuts:    txOuts,
+	}
+	tx.getId()
+	return tx, nil
 }
 
 func (m *mempool) AddTx(to string, amount int) error {
@@ -102,3 +153,10 @@ func (m *mempool) AddTx(to string, amount int) error {
 }
 
 // 승인할 트랜잭션들 가져오기
+func (m *mempool) TxToConfirm() []*Tx {
+	coinbase := makeConinbaseTx("nico")
+	txs := m.Txs
+	txs = append(txs, coinbase)
+	m.Txs = nil
+	return txs
+}
