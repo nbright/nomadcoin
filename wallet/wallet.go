@@ -1,13 +1,53 @@
 package wallet
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
+	"github/nbright/nomadcoin/utils"
 	"math/big"
-
-	"github.com/nbright/nomadcoin/utils"
+	"os"
 )
+
+type wallet struct {
+	privateKey *ecdsa.PrivateKey
+}
+
+var w *wallet
+
+func hasWalletFile() bool {
+	_, err := os.Stat("nomadcoin.wallet")
+	return !os.IsNotExist(err)
+}
+
+func createPrivKey() *ecdsa.PrivateKey {
+	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	utils.HandleErr(err)
+	return privKey
+}
+
+func persistKey(key *ecdsa.PrivateKey) {
+
+}
+
+func Wallet() *wallet {
+	if w == nil {
+		w = &wallet{}
+		//has a wallet already?
+		if hasWalletFile() {
+			//yes -> 파일로 부터 지갑복구
+		}
+		//no -> private Key 생성후 파일에 저장
+		key := createPrivKey()
+		persistKey(key)
+		w.privateKey = key
+
+	}
+	return w
+}
 
 /*
 	절차 /이론코드
@@ -54,9 +94,9 @@ KeyPair (private Key, public Key) (save priv to a file)
 	fmt.Println(ok)
 */
 const (
-	signature  string = "abd2abf373997128e6208ae0a34dfb9d76f412ee34aa77e84122f31fd8445e2076392189d818101628fdeef07cc199cf96a3597ae76936f4b01eedddee42ef17"
-	privateKey string = "3077020101042082c0876db49cade9c968891441ce78a24332f976e838ca8b9edc62304045ccf7a00a06082a8648ce3d030107a14403420004551e6a5ead3b1f90003619b3ecac809e1e6f35f12f60dc64079b74d471829aa07b8e798b91d09b685a02db0d396d712fb0b8108282b8fc11587e722ea9d032c2"
-	//&{{0x84bec0 38500331679112089423409746125272053511493861677303916564936039130802912664224 55886211533036942996220913519515284038369672374467810070347726616707787141826} 59140839645673750371203875215128068884123494416857918168582949937637667228919}
+	signature  string = "93cf8467f7b7379e303052e8834aa5a6c057e3a330769354f37645d62ff03bd9eda9ca698e9414b235741a6e43c2276e6fff43df02af0fcd53e57fd5984553e3"
+	privateKey string = "307702010104208b83e5f622156466b69b0ac849b8d406e4623e90a2aa941c35f79d5ad021c29ea00a06082a8648ce3d030107a14403420004ed9444fe1e6a4177868680cbaea1bb680972eeb6135b5ed3823dba261ffc8f5fdd80d78b6564cda2d1a164bfe5e76db57265e889ed5a615ba4ad4e9c12496c4e"
+
 	hashedMessage string = "1c5863cd55b5a4413fd59f054af57ba3c75c0698b3851d70f99b8de2d5c7338f"
 )
 
@@ -64,9 +104,9 @@ func Start() {
 	// 복구 과정
 	privByte, err := hex.DecodeString(privateKey)
 	utils.HandleErr(err)
-	restoredKey, err := x509.ParseECPrivateKey(privByte)
+	private, err := x509.ParseECPrivateKey(privByte)
 	utils.HandleErr(err)
-	fmt.Println(restoredKey)
+	fmt.Println(private)
 
 	sigBytes, err := hex.DecodeString(signature)
 	rBytes := sigBytes[:len(sigBytes)/2]
@@ -77,4 +117,8 @@ func Start() {
 	bigS.SetBytes(sBytes)
 	fmt.Println(bigR, bigS)
 
+	hashBytes, err := hex.DecodeString(hashedMessage)
+
+	ok := ecdsa.Verify(&private.PublicKey, hashBytes, &bigR, &bigS)
+	fmt.Println(ok)
 }
