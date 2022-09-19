@@ -20,6 +20,7 @@ const (
 
 type wallet struct {
 	privateKey *ecdsa.PrivateKey
+	address    string
 }
 
 var w *wallet
@@ -43,18 +44,34 @@ func persistKey(key *ecdsa.PrivateKey) {
 
 }
 
+// named return : 리턴할 변수를 미리 선언, 리턴시 변수 반환을 하지 않아도 됨.
+// 아주 짧은 함수에서 사용할것을 권고
+func restoreKey() (key *ecdsa.PrivateKey) {
+	keyAsBytes, err := os.ReadFile(fileName)
+	utils.HandleErr(err)
+	key, err = x509.ParseECPrivateKey(keyAsBytes)
+	utils.HandleErr(err)
+	return
+}
+
+func aFromK(key *ecdsa.PrivateKey) string {
+
+}
+
 func Wallet() *wallet {
 	if w == nil {
 		w = &wallet{}
 		//has a wallet already?
 		if hasWalletFile() {
 			//yes -> 파일로 부터 지갑복구
+			w.privateKey = restoreKey()
+		} else {
+			//no -> private Key 생성후 파일에 저장
+			key := createPrivKey()
+			persistKey(key)
+			w.privateKey = key
 		}
-		//no -> private Key 생성후 파일에 저장
-		key := createPrivKey()
-		persistKey(key)
-		w.privateKey = key
-
+		w.address = aFromK(w.privateKey)
 	}
 	return w
 }

@@ -38,7 +38,7 @@ type TxOut struct {
 	Amount int
 }
 
-//unspentTxOut
+// unspentTxOut
 type UTxOut struct {
 	TxID   string
 	Index  int
