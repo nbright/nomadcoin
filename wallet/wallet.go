@@ -7,9 +7,15 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
-	"github/nbright/nomadcoin/utils"
+
 	"math/big"
 	"os"
+
+	"github.com/nbright/nomadcoin/utils"
+)
+
+const (
+	fileName string = "nomadcoin.wallet"
 )
 
 type wallet struct {
@@ -19,7 +25,7 @@ type wallet struct {
 var w *wallet
 
 func hasWalletFile() bool {
-	_, err := os.Stat("nomadcoin.wallet")
+	_, err := os.Stat(fileName)
 	return !os.IsNotExist(err)
 }
 
@@ -30,6 +36,10 @@ func createPrivKey() *ecdsa.PrivateKey {
 }
 
 func persistKey(key *ecdsa.PrivateKey) {
+	bytes, err := x509.MarshalECPrivateKey(key)
+	utils.HandleErr(err)
+	err = os.WriteFile(fileName, bytes, 0644)
+	utils.HandleErr(err)
 
 }
 
