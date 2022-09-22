@@ -7,8 +7,8 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
-
 	"math/big"
+
 	"os"
 
 	"github.com/nbright/nomadcoin/utils"
@@ -20,7 +20,7 @@ const (
 
 type wallet struct {
 	privateKey *ecdsa.PrivateKey
-	address    string
+	Address    string
 }
 
 var w *wallet
@@ -41,7 +41,6 @@ func persistKey(key *ecdsa.PrivateKey) {
 	utils.HandleErr(err)
 	err = os.WriteFile(fileName, bytes, 0644)
 	utils.HandleErr(err)
-
 }
 
 // named return : 리턴할 변수를 미리 선언, 리턴시 변수 반환을 하지 않아도 됨.
@@ -54,8 +53,57 @@ func restoreKey() (key *ecdsa.PrivateKey) {
 	return
 }
 
-func aFromK(key *ecdsa.PrivateKey) string {
+// 두개의 바이트 배열을 합쳐서 16진수로 인코딩
+func encodeBigInts(a, b []byte) string {
+	z := append(a, b...)
+	return fmt.Sprintf("%x", z)
+}
 
+func aFromK(key *ecdsa.PrivateKey) string {
+	return encodeBigInts(key.X.Bytes(), key.Y.Bytes())
+}
+
+func Sign(payload string, w *wallet) string {
+	payloadAsB, err := hex.DecodeString(payload)
+	utils.HandleErr(err)
+	r, s, err := ecdsa.Sign(rand.Reader, w.privateKey, payloadAsB)
+	utils.HandleErr(err)
+	return encodeBigInts(r.Bytes(), s.Bytes())
+}
+
+func restoreBigInts(signature string) (*big.Int, *big.Int, error) {
+	bytes, err := hex.DecodeString(signature)
+	utils.HandleErr(err)
+	if err != nil {
+		return nil, nil, err
+	}
+	firstHalfBytes := bytes[:len(bytes)/2]
+	secondHalfBytes := bytes[len(bytes)/2:]
+	bigA, bigB := big.Int{}, big.Int{}
+	bigA.SetBytes(firstHalfBytes)
+	bigB.SetBytes(secondHalfBytes)
+	return &bigA, &bigB, nil
+}
+
+func verify(signature, payload, address string) bool {
+
+	r, s, err := restoreBigInts(signature)
+	utils.HandleErr(err)
+	x, y, err := restoreBigInts(address)
+	utils.HandleErr(err)
+
+	publicKey := ecdsa.PublicKey{
+		Curve: elliptic.P256(),
+		X:     x,
+		Y:     y,
+	}
+
+	payloadBytes, err := hex.DecodeString(payload)
+	utils.HandleErr(err)
+
+	ok := ecdsa.Verify(&publicKey, payloadBytes, r, s)
+	fmt.Println(ok)
+	return ok
 }
 
 func Wallet() *wallet {
@@ -71,7 +119,7 @@ func Wallet() *wallet {
 			persistKey(key)
 			w.privateKey = key
 		}
-		w.address = aFromK(w.privateKey)
+		w.Address = aFromK(w.privateKey)
 	}
 	return w
 }
@@ -119,7 +167,7 @@ KeyPair (private Key, public Key) (save priv to a file)
 	//4) verify
 	ok := ecdsa.Verify(&privateKey.PublicKey, hashAsBytes, r, s)
 	fmt.Println(ok)
-*/
+
 const (
 	signature  string = "93cf8467f7b7379e303052e8834aa5a6c057e3a330769354f37645d62ff03bd9eda9ca698e9414b235741a6e43c2276e6fff43df02af0fcd53e57fd5984553e3"
 	privateKey string = "307702010104208b83e5f622156466b69b0ac849b8d406e4623e90a2aa941c35f79d5ad021c29ea00a06082a8648ce3d030107a14403420004ed9444fe1e6a4177868680cbaea1bb680972eeb6135b5ed3823dba261ffc8f5fdd80d78b6564cda2d1a164bfe5e76db57265e889ed5a615ba4ad4e9c12496c4e"
@@ -149,3 +197,4 @@ func Start() {
 	ok := ecdsa.Verify(&private.PublicKey, hashBytes, &bigR, &bigS)
 	fmt.Println(ok)
 }
+*/

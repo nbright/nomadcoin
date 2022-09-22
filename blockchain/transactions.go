@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/nbright/nomadcoin/utils"
+	"github.com/nbright/nomadcoin/wallet"
 )
 
 const (
@@ -148,7 +149,7 @@ func makeTx(from, to string, amount int) (*Tx, error) {
 }
 
 func (m *mempool) AddTx(to string, amount int) error {
-	tx, err := makeTx("nico", to, amount)
+	tx, err := makeTx(wallet.Wallet().Address, to, amount)
 	if err != nil {
 		return err
 	}
@@ -158,7 +159,7 @@ func (m *mempool) AddTx(to string, amount int) error {
 
 // 승인할 트랜잭션들 가져오기
 func (m *mempool) TxToConfirm() []*Tx {
-	coinbase := makeConinbaseTx("nico")
+	coinbase := makeConinbaseTx(wallet.Wallet().Address)
 	txs := m.Txs
 	txs = append(txs, coinbase)
 	m.Txs = nil
