@@ -30,13 +30,13 @@ func (t *Tx) getId() {
 }
 
 type TxIn struct {
-	TxID  string
-	Index int
-	Owner string `json:"owner"`
+	TxID      string
+	Index     int
+	Signature string `json:"signature"`
 }
 type TxOut struct {
-	Owner  string
-	Amount int
+	Address string `json:"address"`
+	Amount  int
 }
 
 // unspentTxOut
