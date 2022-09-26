@@ -25,16 +25,14 @@ type Tx struct {
 	TxOuts    []*TxOut `json:"txOuts"`
 }
 
-func (t *Tx) getId() {
-	t.Id = utils.Hash(t)
-}
-
 type TxIn struct {
-	TxID      string
-	Index     int
+	TxID  string
+	Index int
+	//서명
 	Signature string `json:"signature"`
 }
 type TxOut struct {
+	//address는 public key로 만들어지고 string으로 변환시킨 것.
 	Address string `json:"address"`
 	Amount  int
 }
@@ -46,6 +44,35 @@ type UTxOut struct {
 	Amount int
 }
 
+func (t *Tx) getId() {
+	t.Id = utils.Hash(t)
+}
+// 서명을 우리가 서명한 Tx의 id를 갖는 Tx의 input에 저장.
+func (t *Tx) sign() {
+	for _, txIn := t.Txins{
+		//우리가 가진 wallet의 private Key로 서명한다.
+		txIn.Signature = wallet.Sign(t.Id, wallet.Wallet())
+	}
+}
+
+func validate(tx *Tx) bool{
+	valid := true
+	for _, txIn := range tx.Ins{
+		// prevTx는 이 Tx input을 만든 이전의 Tx output의 TX를 말함.
+		prevTx := FindTx(BlockChain(), txIn.TxID)
+		if prevTx == nil{
+			valid= false
+			break
+		}
+		address := prevTx.TxOuts[txIn.Index].Address // 찾은 주소가 public Key임
+		valid := wallet.Verify(txIn.Signature, tx.Id ,address)
+		if !valid {
+			valid= false
+			break
+		}
+	}
+	return valid
+}
 func isOnMempool(uTxOut *UTxOut) bool {
 	exists := false
 Outer:
@@ -77,6 +104,9 @@ func makeConinbaseTx(address string) *Tx {
 	return &tx
 
 }
+
+var ErrorNoMoney = errors.New("not enough 돈")
+var ErrorNotValid = errors.New("Tx Invalid")
 
 func makeTx(from, to string, amount int) (*Tx, error) {
 	/* 순진한 코드
@@ -118,7 +148,7 @@ func makeTx(from, to string, amount int) (*Tx, error) {
 	//보낼려고 하는 돈(Amount)가 from지갑주소의 돈보다 크면 못 보냄 (에러)
 
 	if amount > BalanceByAddress(from, BlockChain()) {
-		return nil, errors.New("not enough 돈")
+		return nil, ErrorNoMoney
 	}
 	var txOuts []*TxOut
 	var txIns []*TxIn
@@ -145,6 +175,11 @@ func makeTx(from, to string, amount int) (*Tx, error) {
 		TxOuts:    txOuts,
 	}
 	tx.getId()
+	tx.sign()
+	valid := validate(tx)
+	if !valid {
+		return nil, ErrorNoMoney
+	}
 	return tx, nil
 }
 

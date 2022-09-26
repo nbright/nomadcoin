@@ -63,6 +63,7 @@ func aFromK(key *ecdsa.PrivateKey) string {
 	return encodeBigInts(key.X.Bytes(), key.Y.Bytes())
 }
 
+// payLoad(Tx의 id)를 지갑의 privateKey 와 함께 넣어서 Sign 함.
 func Sign(payload string, w *wallet) string {
 	payloadAsB, err := hex.DecodeString(payload)
 	utils.HandleErr(err)
@@ -85,7 +86,7 @@ func restoreBigInts(signature string) (*big.Int, *big.Int, error) {
 	return &bigA, &bigB, nil
 }
 
-func verify(signature, payload, address string) bool {
+func Verify(signature, payload, address string) bool {
 
 	r, s, err := restoreBigInts(signature)
 	utils.HandleErr(err)
@@ -129,12 +130,16 @@ func Wallet() *wallet {
 
 1) we hash the msg
 "i love you" -> hash(x) -> "hashed_message"
+실제: msg 는 곧 Tx.ID 이다.
 
 2) generate key pair
 KeyPair (private Key, public Key) (save priv to a file)
+실제: private Key는 wallet의 PrivateKey 이다.
+      public Key는 이전 Tx 의 Address 이다.
 
 3) sign the hash
 ("hashed_message" + private Key) -> "signature"
+
 
 4) verify
 ("hashed_message" + "signature" + public Key) -> true / false
