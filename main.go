@@ -1,6 +1,9 @@
 package main
 
-import "github.com/nbright/nomadcoin/wallet"
+import (
+	"github/nbright/nomadcoin/cli"
+	"github/nbright/nomadcoin/db"
+)
 
 func main() {
 	//go explorer.Start(3000)
@@ -14,8 +17,8 @@ func main() {
 	// blockchain.BlockChain().AddBlock("Second")
 	// blockchain.BlockChain().AddBlock("Third")
 
-	// defer db.Close()
-	// cli.Start()
+	defer db.Close()
+	cli.Start()
 
-	wallet.Wallet()
+	//wallet.Wallet()
 }

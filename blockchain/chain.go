@@ -133,7 +133,7 @@ func UTxOutsByAddress(address string, b *blockChain) []*UTxOut {
 	creatorTxs := make(map[string]bool)
 	for _, block := range Blocks(b) {
 		for _, tx := range block.Transactions {
-			for _, input := range tx.Txins {
+			for _, input := range tx.TxIns {
 				if input.Signature == "COINBASE" {
 					break
 				}

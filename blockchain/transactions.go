@@ -21,7 +21,7 @@ var Mempool *mempool = &mempool{}
 type Tx struct {
 	Id        string   `json:"id"`
 	Timestamp int      `json:"timestamp"`
-	Txins     []*TxIn  `json:"txIns"`
+	TxIns     []*TxIn  `json:"txIns"`
 	TxOuts    []*TxOut `json:"txOuts"`
 }
 
@@ -47,27 +47,28 @@ type UTxOut struct {
 func (t *Tx) getId() {
 	t.Id = utils.Hash(t)
 }
+
 // 서명을 우리가 서명한 Tx의 id를 갖는 Tx의 input에 저장.
 func (t *Tx) sign() {
-	for _, txIn := t.Txins{
+	for _, txIn := range t.TxIns {
 		//우리가 가진 wallet의 private Key로 서명한다.
 		txIn.Signature = wallet.Sign(t.Id, wallet.Wallet())
 	}
 }
 
-func validate(tx *Tx) bool{
+func validate(tx *Tx) bool {
 	valid := true
-	for _, txIn := range tx.Ins{
+	for _, txIn := range tx.TxIns {
 		// prevTx는 이 Tx input을 만든 이전의 Tx output의 TX를 말함.
 		prevTx := FindTx(BlockChain(), txIn.TxID)
-		if prevTx == nil{
-			valid= false
+		if prevTx == nil {
+			valid = false
 			break
 		}
 		address := prevTx.TxOuts[txIn.Index].Address // 찾은 주소가 public Key임
-		valid := wallet.Verify(txIn.Signature, tx.Id ,address)
+		valid := wallet.Verify(txIn.Signature, tx.Id, address)
 		if !valid {
-			valid= false
+			valid = false
 			break
 		}
 	}
@@ -77,7 +78,7 @@ func isOnMempool(uTxOut *UTxOut) bool {
 	exists := false
 Outer:
 	for _, tx := range Mempool.Txs {
-		for _, input := range tx.Txins {
+		for _, input := range tx.TxIns {
 			if input.TxID == uTxOut.TxID && input.Index == uTxOut.Index {
 				exists = true
 				break Outer
@@ -97,7 +98,7 @@ func makeConinbaseTx(address string) *Tx {
 	tx := Tx{
 		Id:        "",
 		Timestamp: int(time.Now().Unix()),
-		Txins:     txIns,
+		TxIns:     txIns,
 		TxOuts:    txOuts,
 	}
 	tx.getId()
@@ -171,7 +172,7 @@ func makeTx(from, to string, amount int) (*Tx, error) {
 	tx := &Tx{
 		Id:        "",
 		Timestamp: int(time.Now().Unix()),
-		Txins:     txIns,
+		TxIns:     txIns,
 		TxOuts:    txOuts,
 	}
 	tx.getId()
