@@ -28,6 +28,11 @@ type addPayload struct {
 	Amount int    `json:"amount"`
 }
 
+type addPeerPayload struct {
+	Address string `json:"address"`
+	Port    string `json:"Port"`
+}
+
 type urlDescription struct {
 	URL         url    `json:"url"`
 	Method      string `json:"method"`
@@ -179,6 +184,21 @@ func myWallet(rw http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(rw).Encode(myWalletResponse{Address: address})
 
 }
+func peers(rw http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		var payload addPeerPayload
+		utils.HandleErr(json.NewDecoder(r.Body).Decode(&payload))
+		p2p.AddPeer(payload.Address, payload.Port)
+		rw.WriteHeader(http.StatusOK)
+	case "GET":
+
+	}
+
+	address := wallet.Wallet().Address
+	json.NewEncoder(rw).Encode(myWalletResponse{Address: address})
+
+}
 
 func Start(aPort int) {
 	router := mux.NewRouter()
@@ -195,6 +215,7 @@ func Start(aPort int) {
 	router.HandleFunc("/wallet", myWallet).Methods("GET")
 	router.HandleFunc("/transactions", transactions).Methods("POST")
 	router.HandleFunc("/ws", p2p.Upgrade).Methods("GET")
+	router.HandleFunc("/peers", peers).Methods("POST")
 	fmt.Printf("Listening on http://localhost%s\n", port)
 	log.Fatal(http.ListenAndServe(port, router))
 }

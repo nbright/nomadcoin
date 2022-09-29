@@ -7,7 +7,6 @@ import (
 	"github.com/nbright/nomadcoin/utils"
 )
 
-var conns []*websocket.Conn
 var upgrader = websocket.Upgrader{}
 
 func Upgrade(rw http.ResponseWriter, r *http.Request) {
@@ -15,7 +14,23 @@ func Upgrade(rw http.ResponseWriter, r *http.Request) {
 		return true
 	}
 	conn, err := upgrader.Upgrade(rw, r, nil)
-	conns = append(conns, conn)
+
+	utils.HandleErr(err)
+
+}
+
+func AddPeer(address, port string) {
+
+}
+
+/** 아주 중요,서버에서  메시지 읽어서, 보내기
+var conns []*websocket.Conn
+func Upgrade(rw http.ResponseWriter, r *http.Request) {
+	upgrader.CheckOrigin = func(r *http.Request) bool {
+		return true
+	}
+	conn, err := upgrader.Upgrade(rw, r, nil)
+	conns.append(conns, conn)
 	utils.HandleErr(err)
 	for {
 		_, p, err := conn.ReadMessage()
@@ -32,3 +47,4 @@ func Upgrade(rw http.ResponseWriter, r *http.Request) {
 	}
 
 }
+*/
