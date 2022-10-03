@@ -1,6 +1,7 @@
 package p2p
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -10,17 +11,27 @@ import (
 var upgrader = websocket.Upgrader{}
 
 func Upgrade(rw http.ResponseWriter, r *http.Request) {
+	openPort := r.URL.Query().Get("openPort")
+	ip := utils.Splitter(r.RemoteAddr, ":", 0)
 	upgrader.CheckOrigin = func(r *http.Request) bool {
-		return true
+		return openPort != "" && ip != ""
 	}
+	// Port 3000 에서 4000으로 메시지를 보낼수 있는 문이야.
+	// 3000에 이 컨넥션이 만들어짐.
+	// Port 3000은 4000포트로 부터 요청받아 업그레이드 할 것임.
 	conn, err := upgrader.Upgrade(rw, r, nil)
-
 	utils.HandleErr(err)
+	initPeer(conn, ip, openPort)
 
 }
 
-func AddPeer(address, port string) {
-
+func AddPeer(address, port, openPort string) {
+	// from :4000 에서 :3000으로 보낼수 있는 Conn 을 만듬. 4000에 이 컨넥션이 만들어짐.
+	// Port 4000은 Port 3000으로부터 업그레이드를 요청하고 있음.
+	fmt.Println("AddPeer")
+	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s:%s/ws?openPort=%s", address, port, openPort[1:]), nil)
+	utils.HandleErr(err)
+	initPeer(conn, address, port)
 }
 
 /** 아주 중요,서버에서  메시지 읽어서, 보내기
