@@ -49,11 +49,12 @@ func (p *peer) read() {
 	// delete peer in case of error
 	defer p.close()
 	for {
-		_, m, err := p.conn.ReadMessage() // 돌때마다 블록 하고 메시지를 읽기를 대기중
+		m := Message{}
+		err := p.conn.ReadJSON(&m) // 돌때마다 블록 하고 메시지를 읽기를 대기중
 		if err != nil {
 			break
 		}
-		fmt.Printf("%s", m)
+		fmt.Print(m.Payload)
 	}
 }
 
