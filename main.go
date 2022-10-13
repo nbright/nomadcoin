@@ -7,6 +7,7 @@ import (
 
 func main() {
 	//websocket, WS, 프로토콜
+	db.DB()
 	defer db.Close()
 	cli.Start()
 }

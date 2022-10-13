@@ -1,6 +1,9 @@
 package p2p
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/nbright/nomadcoin/blockchain"
 	"github.com/nbright/nomadcoin/utils"
 )
@@ -33,4 +36,18 @@ func sendNewestBlock(p *peer) {
 	utils.HandleErr(err)
 	m := makeMessage(MessageNewestBlock, b)
 	p.inbox <- m
+}
+
+func handleMsg(m *Message, p *peer) {
+	switch m.Kind {
+	case MessageNewestBlock:
+		var payload blockchain.Block
+		utils.HandleErr(json.Unmarshal(m.Payload, &payload))
+		fmt.Println(payload)
+	case MessageAllBlocksRequest:
+
+	case MessageAllBlocksResponse:
+
+	}
+	fmt.Printf("Peer: %s, Sent a message with of: %d", p.key, m.Kind)
 }

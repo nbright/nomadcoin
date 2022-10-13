@@ -32,10 +32,8 @@ func Upgrade(rw http.ResponseWriter, r *http.Request) {
 func AddPeer(address, port, openPort string) {
 	// from :4000 에서 :3000으로 보낼수 있는 Conn 을 만듬. 4000에 이 컨넥션이 만들어짐.
 	// Port 4000은 Port 3000으로부터 업그레이드를 요청하고 있음.
-	fmt.Println("AddPeer")
 	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s:%s/ws?openPort=%s", address, port, openPort[1:]), nil)
 	utils.HandleErr(err)
-
 	p := initPeer(conn, address, port)
 	sendNewestBlock(p)
 	//time.Sleep(5 * time.Second)
